@@ -32,6 +32,25 @@ export function coreRoutes(app: Hono<{ Bindings: Env }>) {
 }
 
 export function userRoutes(app: Hono<{ Bindings: Env }>) {
+    /**
+     * Proxy extraction to agent
+     */
+    app.post('/api/chat/:sessionId/extract', async (c) => {
+        try {
+            const sessionId = c.req.param('sessionId');
+            const body = await c.req.json();
+            const agent = await getAgentByName<Env, ChatAgent>(c.env.CHAT_AGENT, sessionId);
+            
+            const res = await agent.fetch(new Request(`http://agent/extract`, {
+                method: 'POST',
+                body: JSON.stringify(body)
+            }));
+            return res;
+        } catch (error) {
+            return c.json({ success: false, error: 'Proxy extraction failed' }, { status: 500 });
+        }
+    });
+
     // Add your routes here
     /**
      * List all chat sessions

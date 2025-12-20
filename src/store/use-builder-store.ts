@@ -6,6 +6,8 @@ export interface ComponentPrimitive {
   category: 'Elements' | 'Forms' | 'Layout' | 'Cards' | 'Complex' | 'Dashboard';
   tags: string[];
   code?: string;
+  extractedAt?: number;
+  complexity?: number;
 }
 export interface CanvasItem extends ComponentPrimitive {
   instanceId: string;
@@ -13,6 +15,7 @@ export interface CanvasItem extends ComponentPrimitive {
 interface BuilderState {
   components: ComponentPrimitive[];
   canvasItems: CanvasItem[];
+  lastExtracted: ComponentPrimitive | null;
   theme: {
     primaryColor: string;
     borderRadius: number;
@@ -34,16 +37,19 @@ export const useBuilderStore = create<BuilderState>()(
         { id: '2', name: 'Input Field', category: 'Forms', tags: ['input', 'tailwind'] },
       ],
       canvasItems: [],
+      lastExtracted: null,
       theme: {
         primaryColor: '#3B82F6',
         borderRadius: 8,
         fontFamily: 'Inter',
       },
-      addComponent: (comp) => set((state) => ({ 
-        components: [comp, ...state.components] 
+      addComponent: (comp) => set((state) => ({
+        components: [{ ...comp, extractedAt: Date.now() }, ...state.components],
+        lastExtracted: comp
       })),
-      removeComponent: (id) => set((state) => ({ 
-        components: state.components.filter((c) => c.id !== id) 
+      removeComponent: (id) => set((state) => ({
+        components: state.components.filter((c) => c.id !== id),
+        lastExtracted: state.lastExtracted?.id === id ? null : state.lastExtracted
       })),
       addToCanvas: (comp) => set((state) => ({
         canvasItems: [...state.canvasItems, { ...comp, instanceId: crypto.randomUUID() }]

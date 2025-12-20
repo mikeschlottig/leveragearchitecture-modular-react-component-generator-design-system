@@ -13,14 +13,30 @@ export const MODELS = [
 ];
 
 class ChatService {
-  private sessionId: string;
-  private baseUrl: string;
-
+  private sessionId: string;  private baseUrl: string;
   constructor() {
     this.sessionId = crypto.randomUUID();
     this.baseUrl = `/api/chat/${this.sessionId}`;
   }
 
+  async extractPrimitive(content: string): Promise<{ success: boolean; data?: any; error?: string }> {
+    try {
+      const response = await fetch(`${this.baseUrl}/extract`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('Extraction failed:', error);
+      return { success: false, error: 'Failed to connect to Intelligence Engine' };
+    }
+  }
   async sendMessage(
     message: string, 
     model?: string, 
