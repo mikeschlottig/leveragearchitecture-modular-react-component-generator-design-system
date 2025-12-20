@@ -1,113 +1,110 @@
 import React from 'react';
-import { Library, Layers, Cpu, TrendingUp, Clock } from 'lucide-react';
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { 
+  Library, 
+  Layers, 
+  Cpu, 
+  TrendingUp, 
+  Clock,
+  ChevronRight
+} from 'lucide-react';
+import { 
+  AreaChart, 
+  Area, 
+  XAxis, 
+  YAxis, 
+  CartesianGrid, 
+  Tooltip, 
+  ResponsiveContainer 
+} from 'recharts';
 import { StatCard } from '@/components/ui/stat-card';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { useBuilderStore } from '@/store/use-builder-store';
+import { MOCK_STATS, CHART_DATA, RECENT_ACTIVITY } from '@/lib/mock-data';
 export function Dashboard() {
-  const components = useBuilderStore(s => s.components);
-  const canvasCount = useBuilderStore(s => s.canvasItems.length);
-  const primaryColor = useBuilderStore(s => s.theme.primaryColor);
-  const totalPrimitives = components.length;
-  const neuralExtractsCount = components.filter(c => c.extractedAt).length;
-  const chartData = [
-    { name: 'Elements', value: components.filter(c => c.category === 'Elements').length * 10 + 5 },
-    { name: 'Forms', value: components.filter(c => c.category === 'Forms').length * 10 + 2 },
-    { name: 'Cards', value: components.filter(c => c.category === 'Cards').length * 10 + 8 },
-    { name: 'Layout', value: components.filter(c => c.category === 'Layout').length * 10 + 4 },
-  ];
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-10 lg:py-12">
       <div className="flex flex-col gap-8">
-        <header>
-          <h1 className="text-3xl font-bold tracking-tight">System Monitor</h1>
-          <p className="text-muted-foreground mt-1">Real-time telemetry for your architectural design system.</p>
-        </header>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          <StatCard
-            title="Total Primitives"
-            value={totalPrimitives}
-            icon={<Library className="size-4" />}
-            trend={`+${totalPrimitives > 0 ? '1' : '0'}`}
+        {/* Header */}
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">System Overview</h1>
+          <p className="text-muted-foreground">Monitoring your architectural primitives and extraction efficiency.</p>
+        </div>
+        {/* Stats Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <StatCard 
+            title="Total Primitives" 
+            value={MOCK_STATS.totalComponents} 
+            icon={<Library className="size-4" />} 
+            trend="+12%"
           />
-          <StatCard
-            title="Active Canvas Items"
-            value={canvasCount}
-            icon={<Layers className="size-4" />}
-            trend={canvasCount > 5 ? "+12%" : undefined}
+          <StatCard 
+            title="Saved Blocks" 
+            value={MOCK_STATS.savedBlocks} 
+            icon={<Layers className="size-4" />} 
+            trend="+5%"
           />
-          <StatCard
-            title="Neural Extracts"
-            value={neuralExtractsCount}
-            icon={<Cpu className="size-4" />}
+          <StatCard 
+            title="AI extractions" 
+            value={MOCK_STATS.aiExtractions} 
+            icon={<Cpu className="size-4" />} 
           />
-          <StatCard
-            title="Reliability Index"
-            value="99.2%"
-            icon={<TrendingUp className="size-4" />}
-            trend="+0.4%"
+          <StatCard 
+            title="Extraction Success" 
+            value="98.4%" 
+            icon={<TrendingUp className="size-4" />} 
+            trend="+2.1%"
           />
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <Card className="lg:col-span-2 border-none shadow-soft">
+          {/* Chart Section */}
+          <Card className="lg:col-span-2">
             <CardHeader>
-              <CardTitle className="text-lg font-semibold flex items-center gap-2">
-                <TrendingUp className="size-4 text-primary" />
-                Category Distribution
-              </CardTitle>
+              <CardTitle className="text-lg font-semibold">Generation Efficiency</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="h-[320px] w-full">
+              <div className="h-[300px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={chartData}>
+                  <AreaChart data={CHART_DATA}>
                     <defs>
-                      <linearGradient id="colorPrimary" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor={primaryColor} stopOpacity={0.2}/>
-                        <stop offset="95%" stopColor={primaryColor} stopOpacity={0}/>
+                      <linearGradient id="colorVal" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3}/>
+                        <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0}/>
                       </linearGradient>
                     </defs>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--muted))" />
-                    <XAxis dataKey="name" stroke="hsl(var(--muted-foreground))" fontSize={11} tickLine={false} axisLine={false} dy={10} />
-                    <YAxis stroke="hsl(var(--muted-foreground))" fontSize={11} tickLine={false} axisLine={false} dx={-10} />
-                    <Tooltip
-                      contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', borderRadius: '12px', fontSize: '12px' }}
+                    <XAxis dataKey="name" stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} />
+                    <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} />
+                    <Tooltip 
+                      contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', borderRadius: '8px' }}
                     />
-                    <Area
-                      type="monotone"
-                      dataKey="value"
-                      stroke={primaryColor}
-                      strokeWidth={3}
-                      fillOpacity={1}
-                      fill="url(#colorPrimary)"
-                      animationDuration={1500}
-                    />
+                    <Area type="monotone" dataKey="value" stroke="hsl(var(--primary))" fillOpacity={1} fill="url(#colorVal)" />
                   </AreaChart>
                 </ResponsiveContainer>
               </div>
             </CardContent>
           </Card>
-          <Card className="border-none shadow-soft">
+          {/* Activity Section */}
+          <Card>
             <CardHeader>
-              <CardTitle className="text-lg font-semibold">Latest Pulses</CardTitle>
+              <CardTitle className="text-lg font-semibold">Recent Activity</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-5">
-                {components.slice(0, 5).map((comp) => (
-                  <div key={comp.id} className="flex items-center gap-4 group cursor-default">
-                    <div className="h-10 w-10 rounded-xl bg-secondary flex items-center justify-center shrink-0 group-hover:bg-primary/10 transition-colors">
-                      <Clock className="size-4 text-muted-foreground group-hover:text-primary" />
+              <div className="space-y-6">
+                {RECENT_ACTIVITY.map((activity, i) => (
+                  <div key={i} className="flex items-start gap-4">
+                    <div className="mt-1 h-8 w-8 rounded-full bg-muted flex items-center justify-center shrink-0">
+                      <Clock className="size-4 text-muted-foreground" />
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold truncate leading-none">{comp.name}</p>
-                      <p className="text-[10px] text-muted-foreground mt-1 uppercase font-bold tracking-wider">{comp.category}</p>
+                    <div className="flex-1 space-y-1">
+                      <p className="text-sm font-medium leading-none">{activity.title}</p>
+                      <p className="text-xs text-muted-foreground">{activity.time}</p>
+                      <Badge variant="outline" className="text-[10px] uppercase font-bold px-1.5 py-0">
+                        {activity.type}
+                      </Badge>
                     </div>
-                    <Badge variant="outline" className="text-[9px] shrink-0">READY</Badge>
+                    <ChevronRight className="size-4 text-muted-foreground self-center" />
                   </div>
                 ))}
-                {components.length === 0 && (
-                  <p className="text-xs text-muted-foreground text-center py-10">Waiting for intelligence extraction...</p>
-                )}
               </div>
             </CardContent>
           </Card>
