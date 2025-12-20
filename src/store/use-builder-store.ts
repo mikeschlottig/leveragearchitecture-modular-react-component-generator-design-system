@@ -11,11 +11,21 @@ export interface ComponentPrimitive {
 }
 export interface CanvasItem extends ComponentPrimitive {
   instanceId: string;
+  customName?: string;
+}
+export interface SavedTemplate {
+  id: string;
+  name: string;
+  items: CanvasItem[];
+  savedAt: number;
 }
 interface BuilderState {
   components: ComponentPrimitive[];
   canvasItems: CanvasItem[];
+  templates: SavedTemplate[];
   lastExtracted: ComponentPrimitive | null;
+  searchQuery: string;
+  activeCategory: string | 'All';
   theme: {
     primaryColor: string;
     borderRadius: number;
@@ -28,6 +38,10 @@ interface BuilderState {
   reorderCanvas: (items: CanvasItem[]) => void;
   updateTheme: (updates: Partial<BuilderState['theme']>) => void;
   clearCanvas: () => void;
+  saveTemplate: (name: string) => void;
+  setSearchQuery: (query: string) => void;
+  setActiveCategory: (category: string) => void;
+  updateCanvasItemName: (instanceId: string, name: string) => void;
 }
 export const useBuilderStore = create<BuilderState>()(
   persist(
@@ -37,7 +51,10 @@ export const useBuilderStore = create<BuilderState>()(
         { id: '2', name: 'Input Field', category: 'Forms', tags: ['input', 'tailwind'] },
       ],
       canvasItems: [],
+      templates: [],
       lastExtracted: null,
+      searchQuery: '',
+      activeCategory: 'All',
       theme: {
         primaryColor: '#3B82F6',
         borderRadius: 8,
@@ -62,6 +79,21 @@ export const useBuilderStore = create<BuilderState>()(
         theme: { ...state.theme, ...updates }
       })),
       clearCanvas: () => set({ canvasItems: [] }),
+      saveTemplate: (name) => set((state) => ({
+        templates: [{
+          id: crypto.randomUUID(),
+          name,
+          items: state.canvasItems,
+          savedAt: Date.now()
+        }, ...state.templates]
+      })),
+      setSearchQuery: (query) => set({ searchQuery: query }),
+      setActiveCategory: (category) => set({ activeCategory: category }),
+      updateCanvasItemName: (instanceId, name) => set((state) => ({
+        canvasItems: state.canvasItems.map(item => 
+          item.instanceId === instanceId ? { ...item, customName: name } : item
+        )
+      })),
     }),
     { name: 'leverage-builder-storage' }
   )
