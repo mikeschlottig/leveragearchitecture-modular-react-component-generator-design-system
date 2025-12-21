@@ -20,6 +20,7 @@ import { LibraryView } from '@/pages/LibraryView';
 import { PaletteStudio } from '@/pages/PaletteStudio';
 import { ArchitectView } from '@/pages/ArchitectView';
 import { AppShell } from '@/components/layout/AppShell';
+import { AuthGuard } from '@/components/auth/AuthGuard';
 const queryClient = new QueryClient();
 const router = createBrowserRouter([
   {
@@ -29,7 +30,7 @@ const router = createBrowserRouter([
   },
   {
     path: "/app",
-    element: <AppShell />,
+    element: <AuthGuard><AppShell /></AuthGuard>,
     errorElement: <RouteErrorBoundary />,
     children: [
       { index: true, element: <Navigate to="/app/dashboard" replace /> },

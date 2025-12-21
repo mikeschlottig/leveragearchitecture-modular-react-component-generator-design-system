@@ -220,7 +220,31 @@ export function userRoutes(app: Hono<{ Bindings: Env }>) {
             return c.json({ 
                 success: false, 
                 error: 'Failed to clear all sessions' 
-            }, { status: 500 });
+            }, { status: 500 });        }
+    });
+    /**
+     * Get User State
+     */
+    app.get('/api/user/state', async (c) => {
+        try {
+            const controller = getAppController(c.env);
+            // In a real app, extract userId from auth token. Here we use sessionId as a proxy.
+            const userId = "demo-user"; 
+            const state = await controller.getUserState(userId);
+            return c.json({ success: true, data: state });
+        } catch (error) {
+            return c.json({ success: false, error: 'Sync failed' }, { status: 500 });
+        }
+    });
+
+    app.post('/api/user/state', async (c) => {
+        try {
+            const controller = getAppController(c.env);
+            const state = await c.req.json();
+            await controller.setUserState("demo-user", state);
+            return c.json({ success: true });
+        } catch (error) {
+            return c.json({ success: false, error: 'Sync failed' }, { status: 500 });
         }
     });
 

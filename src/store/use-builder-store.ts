@@ -42,6 +42,8 @@ interface BuilderState {
   setSearchQuery: (query: string) => void;
   setActiveCategory: (category: string) => void;
   updateCanvasItemName: (instanceId: string, name: string) => void;
+  syncToCloud: () => Promise<void>;
+  hydrateFromCloud: () => Promise<void>;
 }
 export const useBuilderStore = create<BuilderState>()(
   persist(
@@ -94,6 +96,33 @@ export const useBuilderStore = create<BuilderState>()(
           item.instanceId === instanceId ? { ...item, customName: name } : item
         )
       })),
+      syncToCloud: async () => {
+        const state = useBuilderStore.getState();
+        try {
+          await fetch('/api/user/state', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              components: state.components,
+              templates: state.templates,
+              theme: state.theme
+            })
+          });
+        } catch (e) {
+          console.error("Cloud sync failed", e);
+        }
+      },
+      hydrateFromCloud: async () => {
+        try {
+          const res = await fetch('/api/user/state');
+          const json = await res.json();
+          if (json.success && json.data) {
+            set({ ...json.data });
+          }
+        } catch (e) {
+          console.error("Hydration failed", e);
+        }
+      }
     }),
     { name: 'leverage-builder-storage' }
   )

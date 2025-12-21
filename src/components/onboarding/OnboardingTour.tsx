@@ -3,7 +3,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Rocket, ArrowRight, X, Cpu, Library, Box } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/use-auth';
-import { cn } from '@/lib/utils';
 export function OnboardingTour() {
   const [step, setStep] = useState(0);
   const [isVisible, setIsVisible] = useState(false);
@@ -54,7 +53,7 @@ export function OnboardingTour() {
   return (
     <AnimatePresence>
       <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-background/60 backdrop-blur-sm">
-        <motion.div
+        <motion.div 
           initial={{ opacity: 0, scale: 0.9, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.9 }}
@@ -89,4 +88,7 @@ export function OnboardingTour() {
       </div>
     </AnimatePresence>
   );
+}
+function cn(...inputs: any[]) {
+  return inputs.filter(Boolean).join(' ');
 }

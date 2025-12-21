@@ -1,28 +1,36 @@
 import { DurableObject } from 'cloudflare:workers';
 import type { SessionInfo } from './types';
-import type { Env } from './core-utils';
-
-// 🤖 AI Extension Point: Add session management features
+import type { Env } from './core-utils';// 🤖 AI Extension Point: Add session management features
 export class AppController extends DurableObject<Env> {
   private sessions = new Map<string, SessionInfo>();
+  private userStates = new Map<string, any>();
   private loaded = false;
-
   constructor(ctx: DurableObjectState, env: Env) {
     super(ctx, env);
-  }
-
-  private async ensureLoaded(): Promise<void> {
+  }  private async ensureLoaded(): Promise<void> {
     if (!this.loaded) {
       const stored = await this.ctx.storage.get<Record<string, SessionInfo>>('sessions') || {};
+      const states = await this.ctx.storage.get<Record<string, any>>('userStates') || {};
       this.sessions = new Map(Object.entries(stored));
+      this.userStates = new Map(Object.entries(states));
       this.loaded = true;
     }
   }
-
   private async persist(): Promise<void> {
     await this.ctx.storage.put('sessions', Object.fromEntries(this.sessions));
+    await this.ctx.storage.put('userStates', Object.fromEntries(this.userStates));
   }
 
+  async getUserState(userId: string): Promise<any> {
+    await this.ensureLoaded();
+    return this.userStates.get(userId) || null;
+  }
+
+  async setUserState(userId: string, state: any): Promise<void> {
+    await this.ensureLoaded();
+    this.userStates.set(userId, state);
+    await this.persist();
+  }
   async addSession(sessionId: string, title?: string): Promise<void> {
     await this.ensureLoaded();
     const now = Date.now();

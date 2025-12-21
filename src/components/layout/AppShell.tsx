@@ -7,6 +7,17 @@ import { CommandMenu } from "@/components/CommandMenu";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import { Search } from "lucide-react";
+import { useAuth } from "@/hooks/use-auth";
+import { useBuilderStore } from "@/store/use-builder-store";
+import { 
+  DropdownMenu, 
+  DropdownMenuContent, 
+  DropdownMenuItem, 
+  DropdownMenuLabel, 
+  DropdownMenuSeparator, 
+  DropdownMenuTrigger 
+} from "@/components/ui/dropdown-menu";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -17,6 +28,10 @@ import {
 } from "@/components/ui/breadcrumb";
 export function AppShell() {
   const location = useLocation();
+  const user = useAuth(s => s.user);
+  const logout = useAuth(s => s.logout);
+  const components = useBuilderStore(s => s.components);
+  
   const pathSegments = location.pathname.split("/").filter(Boolean);
   return (
     <SidebarProvider defaultOpen={true}>
@@ -53,7 +68,38 @@ export function AppShell() {
                   <span className="text-xs">⌘</span>K
                 </kbd>
               </Button>
-              <ThemeToggle className="relative top-0 right-0" />
+              <div className="flex items-center gap-2">
+                <ThemeToggle className="relative top-0 right-0" />
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" className="relative h-9 w-9 rounded-full">
+                      <Avatar className="h-9 w-9 border-2 border-primary/10">
+                        <AvatarImage src={user?.avatar} alt={user?.name} />
+                        <AvatarFallback>{user?.name?.[0] || 'U'}</AvatarFallback>
+                      </Avatar>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="w-56" align="end" forceMount>
+                    <DropdownMenuLabel className="font-normal">
+                      <div className="flex flex-col space-y-1">
+                        <p className="text-sm font-medium leading-none">{user?.name}</p>
+                        <p className="text-xs leading-none text-muted-foreground">{user?.email}</p>
+                      </div>
+                    </DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem className="gap-2">
+                      <Database className="size-4" /> <span>{components.length} Primitives</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem className="gap-2">
+                      <Settings className="size-4" /> <span>Settings</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem className="text-destructive gap-2 font-medium" onClick={logout}>
+                      <LogOut className="size-4" /> <span>Logout</span>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
             </div>
           </header>
           <main className="flex-1 overflow-auto">
