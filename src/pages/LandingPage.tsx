@@ -3,7 +3,18 @@ import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Zap, Layout, Code2, Layers, ArrowRight, ShieldCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useLocation } from 'react-router-dom';
+import { LoginModal } from '@/components/auth/LoginModal';
 export function LandingPage() {
+  const [showLoginModal, setShowLoginModal] = React.useState(false);
+  const location = useLocation();
+
+  React.useEffect(() => {
+    if (location.state?.triggerLogin) {
+      setShowLoginModal(true);
+    }
+  }, [location]);
+
   return (
     <div className="flex flex-col min-h-screen bg-background">
       {/* Navigation */}
@@ -47,8 +58,8 @@ export function LandingPage() {
                   Get Started for Free <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
               </Link>
-              <Button size="lg" variant="outline" className="h-14 px-8 text-lg rounded-xl">
-                View Demo
+              <Button size="lg" variant="outline" className="h-14 px-8 text-lg rounded-xl" onClick={() => setShowLoginModal(true)}>
+                Sign In Free
               </Button>
             </div>
           </motion.div>
@@ -108,6 +119,7 @@ export function LandingPage() {
           <p className="text-sm text-muted-foreground">© 2024 Cloudflare Agent Systems. All rights reserved.</p>
         </div>
       </footer>
+      <LoginModal open={showLoginModal} onOpenChange={setShowLoginModal} />
     </div>
   );
 }
