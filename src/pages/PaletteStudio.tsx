@@ -7,7 +7,9 @@ import { Button } from '@/components/ui/button';
 import { useBuilderStore } from '@/store/use-builder-store';
 import { cn } from '@/lib/utils';
 export function PaletteStudio() {
-  const theme = useBuilderStore((s) => s.theme);
+  const primaryColor = useBuilderStore((s) => s.theme.primaryColor);
+  const borderRadius = useBuilderStore((s) => s.theme.borderRadius);
+  const fontFamily = useBuilderStore((s) => s.theme.fontFamily);
   const updateTheme = useBuilderStore((s) => s.updateTheme);
   const colors = [
     { name: 'Slate', value: '#0F172A' },
@@ -36,7 +38,7 @@ export function PaletteStudio() {
                       onClick={() => updateTheme({ primaryColor: color.value })}
                       className={cn(
                         "size-8 rounded-full border-2 transition-all hover:scale-110",
-                        theme.primaryColor === color.value ? "border-primary ring-2 ring-primary/20 scale-110" : "border-transparent"
+                        primaryColor === color.value ? "border-primary ring-2 ring-primary/20 scale-110" : "border-transparent"
                       )}
                       style={{ backgroundColor: color.value }}
                       title={color.name}
@@ -47,29 +49,29 @@ export function PaletteStudio() {
               <div className="space-y-4">
                 <div className="flex justify-between items-center">
                   <Label>Corner Radius</Label>
-                  <span className="text-xs font-mono text-muted-foreground">{theme.borderRadius}px</span>
+                  <span className="text-xs font-mono text-muted-foreground">{borderRadius}px</span>
                 </div>
-                <Slider 
-                  value={[theme.borderRadius]} 
-                  onValueChange={(vals) => updateTheme({ borderRadius: vals[0] })} 
-                  max={32} 
-                  step={1} 
+                <Slider
+                  value={[borderRadius]}
+                  onValueChange={(vals) => updateTheme({ borderRadius: vals[0] })}
+                  max={32}
+                  step={1}
                 />
               </div>
               <div className="space-y-4">
                 <Label>Typography</Label>
                 <div className="grid grid-cols-2 gap-2">
-                  <Button 
-                    variant={theme.fontFamily === 'Inter' ? 'default' : 'outline'} 
-                    size="sm" 
+                  <Button
+                    variant={fontFamily === 'Inter' ? 'default' : 'outline'}
+                    size="sm"
                     onClick={() => updateTheme({ fontFamily: 'Inter' })}
                     className="justify-start"
                   >
                     <Type className="size-3 mr-2" /> Inter
                   </Button>
-                  <Button 
-                    variant={theme.fontFamily === 'Sora' ? 'default' : 'outline'} 
-                    size="sm" 
+                  <Button
+                    variant={fontFamily === 'Sora' ? 'default' : 'outline'}
+                    size="sm"
                     onClick={() => updateTheme({ fontFamily: 'Sora' })}
                     className="justify-start font-serif"
                   >
@@ -93,26 +95,26 @@ export function PaletteStudio() {
               </Button>
             </CardHeader>
             <CardContent className="flex items-center justify-center min-h-[400px]">
-              <div className={cn("space-y-8 text-center max-w-sm w-full", theme.fontFamily === 'Sora' ? "font-display" : "font-sans")}>
+              <div className={cn("space-y-8 text-center max-w-sm w-full", fontFamily === 'Sora' ? "font-display" : "font-sans")}>
                 <div className="space-y-4">
-                  <Button 
-                    style={{ borderRadius: `${theme.borderRadius}px`, backgroundColor: theme.primaryColor }} 
-                    size="lg" 
+                  <Button
+                    style={{ borderRadius: `${borderRadius}px`, backgroundColor: primaryColor }}
+                    size="lg"
                     className="w-full text-white hover:opacity-90 transition-opacity"
                   >
                     Primary Action
                   </Button>
                   <div className="flex gap-2">
-                     <Button variant="outline" style={{ borderRadius: `${theme.borderRadius}px`, borderColor: theme.primaryColor, color: theme.primaryColor }} className="flex-1">
+                     <Button variant="outline" style={{ borderRadius: `${borderRadius}px`, borderColor: primaryColor, color: primaryColor }} className="flex-1">
                       Secondary
                     </Button>
-                     <Button variant="secondary" style={{ borderRadius: `${theme.borderRadius}px` }} className="flex-1">
+                     <Button variant="secondary" style={{ borderRadius: `${borderRadius}px` }} className="flex-1">
                       Tertiary
                     </Button>
                   </div>
                 </div>
-                <div className="p-6 bg-background shadow-lg border text-left" style={{ borderRadius: `${theme.borderRadius}px` }}>
-                  <div className="size-8 rounded-lg mb-4 flex items-center justify-center" style={{ backgroundColor: `${theme.primaryColor}15`, color: theme.primaryColor }}>
+                <div className="p-6 bg-background shadow-lg border text-left" style={{ borderRadius: `${borderRadius}px` }}>
+                  <div className="size-8 rounded-lg mb-4 flex items-center justify-center" style={{ backgroundColor: `${primaryColor}15`, color: primaryColor }}>
                     <Palette className="size-4" />
                   </div>
                   <h3 className="font-bold mb-2">Adaptive Primitive</h3>

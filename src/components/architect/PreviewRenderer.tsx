@@ -1,19 +1,18 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { Box, Code2, AlertCircle, RefreshCw, Maximize2 } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import React, { useState, useMemo } from 'react';
+import { AlertCircle, Maximize2 } from 'lucide-react';
 import { useBuilderStore } from '@/store/use-builder-store';
 interface PreviewRendererProps {
   code?: string;
   category: string;
   name: string;
 }
-export function PreviewRenderer({ code, category, name }: PreviewRendererProps) {
-  const theme = useBuilderStore(s => s.theme);
-  const [error, setError] = useState<string | null>(null);
-  // Transform JSX-like code for the iframe shell
+export function PreviewRenderer({ code, name }: PreviewRendererProps) {
+  const fontFamily = useBuilderStore(s => s.theme.fontFamily);
+  const primaryColor = useBuilderStore(s => s.theme.primaryColor);
+  const borderRadius = useBuilderStore(s => s.theme.borderRadius);
+  const [error] = useState<string | null>(null);
   const htmlContent = useMemo(() => {
     if (!code) return '';
-    // Simple regex for basic replacement of common JSX patterns
     let processed = code
       .replace(/className=/g, 'class=')
       .replace(/onClick=\{[^}]*\}/g, '')
@@ -24,14 +23,14 @@ export function PreviewRenderer({ code, category, name }: PreviewRendererProps) 
       <html>
         <head>
           <script src="https://cdn.tailwindcss.com"></script>
-          <link href="https://fonts.googleapis.com/css2?family=${theme.fontFamily}:wght@400;700&display=swap" rel="stylesheet">
+          <link href="https://fonts.googleapis.com/css2?family=${fontFamily}:wght@400;700&display=swap" rel="stylesheet">
           <style>
             :root {
-              --primary: ${theme.primaryColor};
-              --radius: ${theme.borderRadius}px;
+              --primary: ${primaryColor};
+              --radius: ${borderRadius}px;
             }
-            body { 
-              font-family: '${theme.fontFamily}', sans-serif;
+            body {
+              font-family: '${fontFamily}', sans-serif;
               margin: 0;
               padding: 20px;
               display: flex;
@@ -53,7 +52,7 @@ export function PreviewRenderer({ code, category, name }: PreviewRendererProps) 
         </body>
       </html>
     `;
-  }, [code, theme]);
+  }, [code, fontFamily, primaryColor, borderRadius]);
   if (error || !code) {
     return (
       <div className="w-full h-full bg-muted/20 border border-dashed rounded-xl flex flex-col items-center justify-center p-4 text-center">

@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Box, Plus, Settings2, Save, Trash2, Info, LayoutTemplate, Activity } from 'lucide-react';
+import { Box, Plus, Save, Trash2, LayoutTemplate, Activity } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Input } from '@/components/ui/input';
@@ -17,7 +17,9 @@ export function ArchitectView() {
   const addToCanvas = useBuilderStore(s => s.addToCanvas);
   const reorderCanvas = useBuilderStore(s => s.reorderCanvas);
   const clearCanvas = useBuilderStore(s => s.clearCanvas);
-  const theme = useBuilderStore(s => s.theme);
+  const fontFamily = useBuilderStore(s => s.theme.fontFamily);
+  const borderRadius = useBuilderStore(s => s.theme.borderRadius);
+  const primaryColor = useBuilderStore(s => s.theme.primaryColor);
   const saveTemplate = useBuilderStore(s => s.saveTemplate);
   const [blockName, setBlockName] = useState('New Architectural Block');
   const [isExporting, setIsExporting] = useState(false);
@@ -55,7 +57,7 @@ export function ArchitectView() {
         <aside className="w-80 border-r bg-background flex flex-col shrink-0 shadow-sm z-10">
           <div className="p-6 border-b bg-muted/30">
             <h2 className="font-bold flex items-center gap-2 text-lg">
-              <Box className="size-5 text-primary" /> 
+              <Box className="size-5 text-primary" />
               Repository
             </h2>
             <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-widest mt-1.5 opacity-70">
@@ -79,8 +81,8 @@ export function ArchitectView() {
           <div className="h-16 border-b bg-background flex items-center justify-between px-8 shadow-sm">
             <div className="flex items-center gap-8">
               <div className="flex flex-col gap-1">
-                <Input 
-                  value={blockName} 
+                <Input
+                  value={blockName}
                   onChange={(e) => setBlockName(e.target.value)}
                   className="h-8 w-64 font-bold border-none bg-transparent hover:bg-secondary/50 focus:bg-secondary/80 focus:ring-0 transition-all p-0 text-lg"
                 />
@@ -107,11 +109,11 @@ export function ArchitectView() {
             <div
               className={cn(
                 "max-w-4xl mx-auto min-h-full bg-background border shadow-2xl p-10 md:p-16 transition-all relative",
-                theme.fontFamily === 'Sora' ? "font-display" : "font-sans"
+                fontFamily === 'Sora' ? "font-display" : "font-sans"
               )}
-              style={{ 
-                borderRadius: `${theme.borderRadius * 3}px`,
-                borderColor: `${theme.primaryColor}20`
+              style={{
+                borderRadius: `${borderRadius * 3}px`,
+                borderColor: `${primaryColor}20`
               }}
             >
               <div className="absolute top-8 left-1/2 -translate-x-1/2 flex items-center gap-2 opacity-10 pointer-events-none select-none">
@@ -140,9 +142,9 @@ export function ArchitectView() {
           </div>
         </main>
       </div>
-      <BlockExportDialog 
-        open={isExporting} 
-        onOpenChange={setIsExporting} 
+      <BlockExportDialog
+        open={isExporting}
+        onOpenChange={setIsExporting}
         blockName={blockName}
       />
     </DndContext>

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Library, Layers, Cpu, TrendingUp, Clock, ChevronRight } from 'lucide-react';
+import { Library, Layers, Cpu, TrendingUp, Clock } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { StatCard } from '@/components/ui/stat-card';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -7,12 +7,10 @@ import { Badge } from '@/components/ui/badge';
 import { useBuilderStore } from '@/store/use-builder-store';
 export function Dashboard() {
   const components = useBuilderStore(s => s.components);
-  const canvasItems = useBuilderStore(s => s.canvasItems);
-  const theme = useBuilderStore(s => s.theme);
-  const primaryColor = theme.primaryColor;
+  const canvasCount = useBuilderStore(s => s.canvasItems.length);
+  const primaryColor = useBuilderStore(s => s.theme.primaryColor);
   const totalPrimitives = components.length;
-  const totalBlocks = canvasItems.length;
-  // Calculate category distribution for the chart (simplified mock adaptation)
+  const neuralExtractsCount = components.filter(c => c.extractedAt).length;
   const chartData = [
     { name: 'Elements', value: components.filter(c => c.category === 'Elements').length * 10 + 5 },
     { name: 'Forms', value: components.filter(c => c.category === 'Forms').length * 10 + 2 },
@@ -35,13 +33,13 @@ export function Dashboard() {
           />
           <StatCard
             title="Active Canvas Items"
-            value={totalBlocks}
+            value={canvasCount}
             icon={<Layers className="size-4" />}
-            trend={totalBlocks > 5 ? "+12%" : undefined}
+            trend={canvasCount > 5 ? "+12%" : undefined}
           />
           <StatCard
             title="Neural Extracts"
-            value={components.filter(c => c.extractedAt).length}
+            value={neuralExtractsCount}
             icon={<Cpu className="size-4" />}
           />
           <StatCard
@@ -75,13 +73,13 @@ export function Dashboard() {
                     <Tooltip
                       contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', borderRadius: '12px', fontSize: '12px' }}
                     />
-                    <Area 
-                      type="monotone" 
-                      dataKey="value" 
-                      stroke={primaryColor} 
+                    <Area
+                      type="monotone"
+                      dataKey="value"
+                      stroke={primaryColor}
                       strokeWidth={3}
-                      fillOpacity={1} 
-                      fill="url(#colorPrimary)" 
+                      fillOpacity={1}
+                      fill="url(#colorPrimary)"
                       animationDuration={1500}
                     />
                   </AreaChart>
@@ -95,7 +93,7 @@ export function Dashboard() {
             </CardHeader>
             <CardContent>
               <div className="space-y-5">
-                {components.slice(0, 5).map((comp, i) => (
+                {components.slice(0, 5).map((comp) => (
                   <div key={comp.id} className="flex items-center gap-4 group cursor-default">
                     <div className="h-10 w-10 rounded-xl bg-secondary flex items-center justify-center shrink-0 group-hover:bg-primary/10 transition-colors">
                       <Clock className="size-4 text-muted-foreground group-hover:text-primary" />
