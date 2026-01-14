@@ -1,6 +1,6 @@
 # AI Chat Agent on Cloudflare Workers
 
-[cloudflarebutton]
+[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/mikeschlottig/leveragearchitecture-modular-react-component-generator-design-system)
 
 A production-ready AI chat application built with Cloudflare Workers, Durable Objects, and Agents SDK. Features multi-session conversations, streaming responses, tool integration (web search, weather), and a modern React UI with shadcn/ui and Tailwind CSS.
 
@@ -103,7 +103,7 @@ Optional: `SERPAPI_KEY`, `OPENROUTER_API_KEY`.
 
 Deploy to Cloudflare Workers in one click:
 
-[cloudflarebutton]
+[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/mikeschlottig/leveragearchitecture-modular-react-component-generator-design-system)
 
 Or manually:
 
