@@ -47,7 +47,7 @@ interface BuilderState {
 }
 export const useBuilderStore = create<BuilderState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       components: [
         { id: '1', name: 'Primary Button', category: 'Elements', tags: ['ui', 'atomic'] },
         { id: '2', name: 'Input Field', category: 'Forms', tags: ['input', 'tailwind'] },
@@ -62,14 +62,20 @@ export const useBuilderStore = create<BuilderState>()(
         borderRadius: 8,
         fontFamily: 'Inter',
       },
-      addComponent: (comp) => set((state) => ({
-        components: [{ ...comp, extractedAt: Date.now() }, ...state.components],
-        lastExtracted: comp
-      })),
-      removeComponent: (id) => set((state) => ({
-        components: state.components.filter((c) => c.id !== id),
-        lastExtracted: state.lastExtracted?.id === id ? null : state.lastExtracted
-      })),
+      addComponent: (comp) => {
+        set((state) => ({
+          components: [{ ...comp, extractedAt: Date.now() }, ...state.components],
+          lastExtracted: comp
+        }));
+        get().syncToCloud();
+      },
+      removeComponent: (id) => {
+        set((state) => ({
+          components: state.components.filter((c) => c.id !== id),
+          lastExtracted: state.lastExtracted?.id === id ? null : state.lastExtracted
+        }));
+        get().syncToCloud();
+      },
       addToCanvas: (comp) => set((state) => ({
         canvasItems: [...state.canvasItems, { ...comp, instanceId: crypto.randomUUID() }]
       })),
@@ -77,27 +83,36 @@ export const useBuilderStore = create<BuilderState>()(
         canvasItems: state.canvasItems.filter((item) => item.instanceId !== instanceId)
       })),
       reorderCanvas: (items) => set({ canvasItems: items }),
-      updateTheme: (updates) => set((state) => ({
-        theme: { ...state.theme, ...updates }
-      })),
-      clearCanvas: () => set({ canvasItems: [] }),
-      saveTemplate: (name) => set((state) => ({
-        templates: [{
-          id: crypto.randomUUID(),
-          name,
-          items: state.canvasItems,
-          savedAt: Date.now()
-        }, ...state.templates]
-      })),
+      updateTheme: (updates) => {
+        set((state) => ({
+          theme: { ...state.theme, ...updates }
+        }));
+        get().syncToCloud();
+      },
+      clearCanvas: () => {
+        set({ canvasItems: [] });
+        get().syncToCloud();
+      },
+      saveTemplate: (name) => {
+        set((state) => ({
+          templates: [{
+            id: crypto.randomUUID(),
+            name,
+            items: state.canvasItems,
+            savedAt: Date.now()
+          }, ...state.templates]
+        }));
+        get().syncToCloud();
+      },
       setSearchQuery: (query) => set({ searchQuery: query }),
       setActiveCategory: (category) => set({ activeCategory: category }),
       updateCanvasItemName: (instanceId, name) => set((state) => ({
-        canvasItems: state.canvasItems.map(item => 
+        canvasItems: state.canvasItems.map(item =>
           item.instanceId === instanceId ? { ...item, customName: name } : item
         )
       })),
       syncToCloud: async () => {
-        const state = useBuilderStore.getState();
+        const state = get();
         try {
           await fetch('/api/user/state', {
             method: 'POST',
@@ -117,7 +132,13 @@ export const useBuilderStore = create<BuilderState>()(
           const res = await fetch('/api/user/state');
           const json = await res.json();
           if (json.success && json.data) {
-            set({ ...json.data });
+            set((state) => ({
+              ...state,
+              ...json.data,
+              // Keep local session specific UI state
+              searchQuery: state.searchQuery,
+              activeCategory: state.activeCategory
+            }));
           }
         } catch (e) {
           console.error("Hydration failed", e);

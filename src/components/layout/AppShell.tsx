@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
@@ -6,9 +6,10 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import { CommandMenu } from "@/components/CommandMenu";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
-import { Search, Database, Settings, LogOut } from "lucide-react";
+import { Search, Database, Settings, LogOut, Cloud } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useBuilderStore } from "@/store/use-builder-store";
+import { OnboardingTour } from "@/components/onboarding/OnboardingTour";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -26,6 +27,7 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator
 } from "@/components/ui/breadcrumb";
+import { cn } from "@/lib/utils";
 export function AppShell() {
   const location = useLocation();
   const userName = useAuth(s => s.user?.name);
@@ -33,6 +35,16 @@ export function AppShell() {
   const userAvatar = useAuth(s => s.user?.avatar);
   const logout = useAuth(s => s.logout);
   const primitiveCount = useBuilderStore(s => s.components.length);
+  const hydrateFromCloud = useBuilderStore(s => s.hydrateFromCloud);
+  const [isHydrating, setIsHydrating] = useState(false);
+  useEffect(() => {
+    const init = async () => {
+      setIsHydrating(true);
+      await hydrateFromCloud();
+      setIsHydrating(false);
+    };
+    init();
+  }, [hydrateFromCloud]);
   const pathSegments = location.pathname.split("/").filter(Boolean);
   return (
     <SidebarProvider defaultOpen={true}>
@@ -58,6 +70,10 @@ export function AppShell() {
               </Breadcrumb>
             </div>
             <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-secondary/30 text-[10px] font-bold uppercase tracking-wider text-muted-foreground animate-in fade-in zoom-in duration-300">
+                <Cloud className={cn("size-3", isHydrating && "animate-pulse text-primary")} />
+                <span>{isHydrating ? "Syncing..." : "Saved"}</span>
+              </div>
               <Button
                 variant="outline"
                 className="hidden md:flex relative h-9 w-64 justify-start text-sm text-muted-foreground bg-secondary/50 border-none px-3"
@@ -107,6 +123,7 @@ export function AppShell() {
             <Outlet />
           </main>
           <CommandMenu />
+          <OnboardingTour />
         </SidebarInset>
       </div>
     </SidebarProvider>

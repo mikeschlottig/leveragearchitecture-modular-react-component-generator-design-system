@@ -1,5 +1,5 @@
-import React, { useState, useMemo, useEffect } from 'react';
-import { AlertCircle, Maximize2, X } from 'lucide-react';
+import React, { useState, useMemo } from 'react';
+import { AlertCircle, Maximize2 } from 'lucide-react';
 import { useBuilderStore } from '@/store/use-builder-store';
 import { useDebounce } from 'react-use';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -24,21 +24,26 @@ export function PreviewRenderer({ code, name }: PreviewRendererProps) {
   );
   const htmlContent = useMemo(() => {
     if (!code) return '';
-    // Clean code for browser execution (simple JSX to HTML transformation for preview)
+    // Clean code for browser execution
+    // Handle markdown blocks and common JSX attributes
     const processed = code
+      .replace(/```(?:jsx|tsx|html|javascript|js)?\n?([\s\S]*?)```/g, '$1')
       .replace(/className=/g, 'class=')
-      .replace(/\{['"]([^'"]+)['"]\}/g, '$1') // Simple replacement for { "string" }
+      .replace(/\{['"]([^'"]+)['"]\}/g, '$1')
       .replace(/export default [^;]*;/g, '')
-      .replace(/import [^;]*;/g, '');
+      .replace(/import [^;]*;/g, '')
+      .trim();
+    const fontSlug = debouncedTheme.fontFamily.replace(/\s+/g, '+');
     return `
       <!DOCTYPE html>
       <html>
         <head>
           <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
           <script src="https://cdn.tailwindcss.com"></script>
           <link rel="preconnect" href="https://fonts.googleapis.com">
           <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-          <link href="https://fonts.googleapis.com/css2?family=${debouncedTheme.fontFamily}:wght@400;500;600;700&display=swap" rel="stylesheet">
+          <link href="https://fonts.googleapis.com/css2?family=${fontSlug}:wght@400;500;600;700&display=swap" rel="stylesheet">
           <style>
             :root {
               --primary: ${debouncedTheme.primaryColor};
@@ -50,21 +55,21 @@ export function PreviewRenderer({ code, name }: PreviewRendererProps) {
             body {
               font-family: '${debouncedTheme.fontFamily}', sans-serif;
               margin: 0;
-              padding: 24px;
+              padding: 20px;
               display: flex;
               align-items: center;
               justify-content: center;
               min-height: 100vh;
               background-color: transparent;
-              color: #1a1a1a;
             }
             .preview-wrap {
               width: 100%;
               max-width: 100%;
               border-radius: var(--radius);
-              transform: scale(1);
+              display: flex;
+              justify-content: center;
+              align-items: center;
             }
-            /* Custom Tailwind overrides to use theme variables */
             .bg-primary { background-color: var(--primary) !important; }
             .text-primary { color: var(--primary) !important; }
             .border-primary { border-color: var(--primary) !important; }
@@ -105,9 +110,6 @@ export function PreviewRenderer({ code, name }: PreviewRendererProps) {
             </Button>
           </DialogTrigger>
           <DialogContent className="max-w-[95vw] w-full h-[90vh] p-0 overflow-hidden border-none shadow-2xl">
-            <DialogHeader className="sr-only">
-              <DialogTitle>Component Detail: {name}</DialogTitle>
-            </DialogHeader>
             <div className="w-full h-full bg-slate-100 dark:bg-slate-950">
                <iframe
                 title={`Fullscreen Preview of ${name}`}
