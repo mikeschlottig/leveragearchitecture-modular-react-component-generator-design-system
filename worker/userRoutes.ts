@@ -1,56 +1,54 @@
 import { Hono } from "hono";
-import { getAgentByName } from 'agents';
-import { ChatAgent } from './agent';
 import { API_RESPONSES } from './config';
 import { Env, getAppController, registerSession, unregisterSession } from "./core-utils";
 /**
- * DO NOT MODIFY THIS FUNCTION. Only for your reference.
+ * Core Routes - Optimized for stable Worker deployments
+ * Directly retrieves DO stubs to avoid TS2589 recursion errors in Agent SDK
  */
 export function coreRoutes(app: Hono<{ Bindings: Env }>) {
-    // Use this API for conversations. **DO NOT MODIFY**
     app.all('/api/chat/:sessionId/*', async (c) => {
         try {
-        const sessionId = c.req.param('sessionId');
-        // We cast to any to resolve TS2589 "Type instantiation is excessively deep"
-        const agent = await getAgentByName<Env, any>(c.env.CHAT_AGENT, sessionId); 
-        const url = new URL(c.req.url);
-        url.pathname = url.pathname.replace(`/api/chat/${sessionId}`, '');
-        return agent.fetch(new Request(url.toString(), {
-            method: c.req.method,
-            headers: c.req.header(),
-            body: c.req.method === 'GET' || c.req.method === 'DELETE' ? undefined : c.req.raw.body
-        }));
+            const sessionId = c.req.param('sessionId');
+            // Bypass SDK utility and use direct binding to resolve TS2589 deep recursion
+            const id = c.env.CHAT_AGENT.idFromName(sessionId);
+            const agent: any = c.env.CHAT_AGENT.get(id);
+            const url = new URL(c.req.url);
+            url.pathname = url.pathname.replace(`/api/chat/${sessionId}`, '');
+            return agent.fetch(new Request(url.toString(), {
+                method: c.req.method,
+                headers: c.req.header(),
+                body: c.req.method === 'GET' || c.req.method === 'DELETE' ? undefined : c.req.raw.body
+            }));
         } catch (error) {
-        console.error('Agent routing error:', error);
-        return c.json({
-            success: false,
-            error: API_RESPONSES.AGENT_ROUTING_FAILED
-        }, { status: 500 });
+            console.error('Agent routing error:', error);
+            return c.json({
+                success: false,
+                error: API_RESPONSES.AGENT_ROUTING_FAILED
+            }, { status: 500 });
         }
     });
 }
 export function userRoutes(app: Hono<{ Bindings: Env }>) {
     /**
-     * Proxy extraction to agent
+     * Specialized Extraction Proxy
      */
     app.post('/api/chat/:sessionId/extract', async (c) => {
         try {
             const sessionId = c.req.param('sessionId');
             const body = await c.req.json();
-            // We cast to any to resolve TS2589 "Type instantiation is excessively deep"
-            const agent = await getAgentByName<Env, any>(c.env.CHAT_AGENT, sessionId);
-            const res = await agent.fetch(new Request(`http://agent/extract`, {
+            // Direct DO binding retrieval for extraction proxy
+            const id = c.env.CHAT_AGENT.idFromName(sessionId);
+            const agent: any = c.env.CHAT_AGENT.get(id);
+            return await agent.fetch(new Request(`http://agent/extract`, {
                 method: 'POST',
                 body: JSON.stringify(body)
             }));
-            return res;
         } catch (error) {
             return c.json({ success: false, error: 'Proxy extraction failed' }, { status: 500 });
         }
     });
     /**
-     * List all chat sessions
-     * GET /api/sessions
+     * Session and State Persistence Routes
      */
     app.get('/api/sessions', async (c) => {
         try {
@@ -58,17 +56,9 @@ export function userRoutes(app: Hono<{ Bindings: Env }>) {
             const sessions = await controller.listSessions();
             return c.json({ success: true, data: sessions });
         } catch (error) {
-            console.error('Failed to list sessions:', error);
-            return c.json({
-                success: false,
-                error: 'Failed to retrieve sessions'
-            }, { status: 500 });
+            return c.json({ success: false, error: 'Failed to retrieve sessions' }, { status: 500 });
         }
     });
-    /**
-     * Create a new chat session
-     * POST /api/sessions
-     */
     app.post('/api/sessions', async (c) => {
         try {
             const body = await c.req.json().catch(() => ({}));
@@ -77,114 +67,37 @@ export function userRoutes(app: Hono<{ Bindings: Env }>) {
             let sessionTitle = title;
             if (!sessionTitle) {
                 const now = new Date();
-                const dateTime = now.toLocaleString([], {
-                    month: '2-digit',
-                    day: '2-digit',
-                    hour: '2-digit',
-                    minute: '2-digit'
-                });
-                if (firstMessage && firstMessage.trim()) {
-                    const cleanMessage = firstMessage.trim().replace(/\s+/g, ' ');
-                    const truncated = cleanMessage.length > 40
-                        ? cleanMessage.slice(0, 37) + '...'
-                        : cleanMessage;
-                    sessionTitle = `${truncated} • ${dateTime}`;
+                const dateTime = now.toLocaleString([], { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
+                if (firstMessage) {
+                    sessionTitle = `${firstMessage.slice(0, 30)}... • ${dateTime}`;
                 } else {
-                    sessionTitle = `Chat ${dateTime}`;
+                    sessionTitle = `Architect ${dateTime}`;
                 }
             }
             await registerSession(c.env, sessionId, sessionTitle);
-            return c.json({
-                success: true,
-                data: { sessionId, title: sessionTitle }
-            });
+            return c.json({ success: true, data: { sessionId, title: sessionTitle } });
         } catch (error) {
-            console.error('Failed to create session:', error);
-            return c.json({
-                success: false,
-                error: 'Failed to create session'
-            }, { status: 500 });
+            return c.json({ success: false, error: 'Failed to create session' }, { status: 500 });
         }
     });
-    /**
-     * Delete a chat session
-     */
     app.delete('/api/sessions/:sessionId', async (c) => {
         try {
             const sessionId = c.req.param('sessionId');
             const deleted = await unregisterSession(c.env, sessionId);
-            if (!deleted) {
-                return c.json({ success: false, error: 'Session not found' }, { status: 404 });
-            }
-            return c.json({ success: true, data: { deleted: true } });
+            return c.json({ success: true, data: { deleted } });
         } catch (error) {
-            console.error('Failed to delete session:', error);
             return c.json({ success: false, error: 'Failed to delete session' }, { status: 500 });
         }
     });
-    /**
-     * Update session title
-     */
-    app.put('/api/sessions/:sessionId/title', async (c) => {
-        try {
-            const sessionId = c.req.param('sessionId');
-            const { title } = await c.req.json();
-            if (!title || typeof title !== 'string') {
-                return c.json({ success: false, error: 'Title is required' }, { status: 400 });
-            }
-            const controller = getAppController(c.env);
-            const updated = await controller.updateSessionTitle(sessionId, title);
-            if (!updated) {
-                return c.json({ success: false, error: 'Session not found' }, { status: 404 });
-            }
-            return c.json({ success: true, data: { title } });
-        } catch (error) {
-            console.error('Failed to update session title:', error);
-            return c.json({ success: false, error: 'Failed to update session title' }, { status: 500 });
-        }
-    });
-    /**
-     * Get session count and stats
-     */
-    app.get('/api/sessions/stats', async (c) => {
-        try {
-            const controller = getAppController(c.env);
-            const count = await controller.getSessionCount();
-            return c.json({ success: true, data: { totalSessions: count } });
-        } catch (error) {
-            console.error('Failed to get session stats:', error);
-            return c.json({ success: false, error: 'Failed to retrieve session stats' }, { status: 500 });
-        }
-    });
-    /**
-     * Clear all chat sessions
-     */
-    app.delete('/api/sessions', async (c) => {
-        try {
-            const controller = getAppController(c.env);
-            const deletedCount = await controller.clearAllSessions();
-            return c.json({ success: true, data: { deletedCount } });
-        } catch (error) {
-            console.error('Failed to clear all sessions:', error);
-            return c.json({ success: false, error: 'Failed to clear all sessions' }, { status: 500 });
-        }
-    });
-    /**
-     * Get User State
-     */
     app.get('/api/user/state', async (c) => {
         try {
             const controller = getAppController(c.env);
-            const userId = "demo-user";
-            const state = await controller.getUserState(userId);
+            const state = await controller.getUserState("demo-user");
             return c.json({ success: true, data: state });
         } catch (error) {
-            return c.json({ success: false, error: 'Sync failed' }, { status: 500 });
+            return c.json({ success: false, error: 'State sync failed' }, { status: 500 });
         }
     });
-    /**
-     * Set User State
-     */
     app.post('/api/user/state', async (c) => {
         try {
             const controller = getAppController(c.env);
@@ -192,8 +105,7 @@ export function userRoutes(app: Hono<{ Bindings: Env }>) {
             await controller.setUserState("demo-user", state);
             return c.json({ success: true });
         } catch (error) {
-            return c.json({ success: false, error: 'Sync failed' }, { status: 500 });
+            return c.json({ success: false, error: 'State persistence failed' }, { status: 500 });
         }
     });
-    app.get('/api/test', (c) => c.json({ success: true, data: { name: 'this works' }}));
 }

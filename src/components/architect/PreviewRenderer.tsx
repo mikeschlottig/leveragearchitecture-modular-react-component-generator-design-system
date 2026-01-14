@@ -1,6 +1,9 @@
-import React, { useState, useMemo } from 'react';
-import { AlertCircle, Maximize2 } from 'lucide-react';
+import React, { useState, useMemo, useEffect } from 'react';
+import { AlertCircle, Maximize2, X } from 'lucide-react';
 import { useBuilderStore } from '@/store/use-builder-store';
+import { useDebounce } from 'react-use';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
 interface PreviewRendererProps {
   code?: string;
   category: string;
@@ -10,72 +13,118 @@ export function PreviewRenderer({ code, name }: PreviewRendererProps) {
   const fontFamily = useBuilderStore(s => s.theme.fontFamily);
   const primaryColor = useBuilderStore(s => s.theme.primaryColor);
   const borderRadius = useBuilderStore(s => s.theme.borderRadius);
-  const [error] = useState<string | null>(null);
+  const [debouncedTheme, setDebouncedTheme] = useState({ fontFamily, primaryColor, borderRadius });
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  useDebounce(
+    () => {
+      setDebouncedTheme({ fontFamily, primaryColor, borderRadius });
+    },
+    300,
+    [fontFamily, primaryColor, borderRadius]
+  );
   const htmlContent = useMemo(() => {
     if (!code) return '';
-    let processed = code
+    // Clean code for browser execution (simple JSX to HTML transformation for preview)
+    const processed = code
       .replace(/className=/g, 'class=')
-      .replace(/onClick=\{[^}]*\}/g, '')
+      .replace(/\{['"]([^'"]+)['"]\}/g, '$1') // Simple replacement for { "string" }
       .replace(/export default [^;]*;/g, '')
       .replace(/import [^;]*;/g, '');
     return `
       <!DOCTYPE html>
       <html>
         <head>
+          <meta charset="UTF-8">
           <script src="https://cdn.tailwindcss.com"></script>
-          <link href="https://fonts.googleapis.com/css2?family=${fontFamily}:wght@400;700&display=swap" rel="stylesheet">
+          <link rel="preconnect" href="https://fonts.googleapis.com">
+          <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+          <link href="https://fonts.googleapis.com/css2?family=${debouncedTheme.fontFamily}:wght@400;500;600;700&display=swap" rel="stylesheet">
           <style>
             :root {
-              --primary: ${primaryColor};
-              --radius: ${borderRadius}px;
+              --primary: ${debouncedTheme.primaryColor};
+              --radius: ${debouncedTheme.borderRadius}px;
+            }
+            * {
+              transition: all 0.2s ease-in-out;
             }
             body {
-              font-family: '${fontFamily}', sans-serif;
+              font-family: '${debouncedTheme.fontFamily}', sans-serif;
               margin: 0;
-              padding: 20px;
+              padding: 24px;
               display: flex;
               align-items: center;
               justify-content: center;
               min-height: 100vh;
               background-color: transparent;
+              color: #1a1a1a;
             }
-            .preview-container {
+            .preview-wrap {
               width: 100%;
+              max-width: 100%;
               border-radius: var(--radius);
+              transform: scale(1);
             }
+            /* Custom Tailwind overrides to use theme variables */
+            .bg-primary { background-color: var(--primary) !important; }
+            .text-primary { color: var(--primary) !important; }
+            .border-primary { border-color: var(--primary) !important; }
+            .rounded-lg { border-radius: var(--radius) !important; }
+            .rounded-xl { border-radius: calc(var(--radius) * 1.5) !important; }
           </style>
         </head>
         <body>
-          <div class="preview-container">
+          <div class="preview-wrap">
             ${processed}
           </div>
         </body>
       </html>
     `;
-  }, [code, fontFamily, primaryColor, borderRadius]);
-  if (error || !code) {
-    return (
-      <div className="w-full h-full bg-muted/20 border border-dashed rounded-xl flex flex-col items-center justify-center p-4 text-center">
-        <AlertCircle className="size-6 text-muted-foreground mb-2" />
-        <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Blueprint View</p>
-        <p className="text-xs mt-1 font-medium">{name}</p>
+  }, [code, debouncedTheme]);
+  const PreviewFrame = ({ className }: { className?: string }) => (
+    <div className={className || "w-full h-full relative group/preview bg-white/80 dark:bg-slate-900/50 rounded-xl overflow-hidden border shadow-inner transition-all hover:bg-white dark:hover:bg-slate-900"}>
+      {code ? (
+        <iframe
+          title={`Preview of ${name}`}
+          srcDoc={htmlContent}
+          className="w-full h-full border-none"
+          sandbox="allow-scripts"
+          loading="lazy"
+        />
+      ) : (
+        <div className="w-full h-full flex flex-col items-center justify-center p-4 text-center">
+          <AlertCircle className="size-6 text-muted-foreground mb-2" />
+          <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground opacity-50">Blueprint View</p>
+          <p className="text-xs mt-1 font-medium">{name}</p>
+        </div>
+      )}
+      <div className="absolute top-3 right-3 flex gap-2">
+        <Dialog open={isFullscreen} onOpenChange={setIsFullscreen}>
+          <DialogTrigger asChild>
+            <Button size="icon" variant="secondary" className="size-8 rounded-full opacity-0 group-hover/preview:opacity-100 transition-opacity shadow-lg">
+              <Maximize2 className="size-3" />
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-[95vw] w-full h-[90vh] p-0 overflow-hidden border-none shadow-2xl">
+            <DialogHeader className="sr-only">
+              <DialogTitle>Component Detail: {name}</DialogTitle>
+            </DialogHeader>
+            <div className="w-full h-full bg-slate-100 dark:bg-slate-950">
+               <iframe
+                title={`Fullscreen Preview of ${name}`}
+                srcDoc={htmlContent}
+                className="w-full h-full border-none"
+                sandbox="allow-scripts"
+              />
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
-    );
-  }
-  return (
-    <div className="w-full h-full relative group/preview bg-white rounded-xl overflow-hidden border shadow-inner">
-      <iframe
-        title={`Preview of ${name}`}
-        srcDoc={htmlContent}
-        className="w-full h-full border-none pointer-events-none"
-        sandbox="allow-scripts"
-      />
-      <div className="absolute inset-0 bg-black/5 opacity-0 group-hover/preview:opacity-100 transition-opacity flex items-center justify-center">
-        <div className="bg-background/90 backdrop-blur-md px-3 py-1.5 rounded-full border shadow-lg flex items-center gap-2 scale-90 group-hover/preview:scale-100 transition-transform">
-          <Maximize2 className="size-3 text-primary" />
-          <span className="text-[10px] font-bold uppercase tracking-widest">Live Preview</span>
+      <div className="absolute bottom-3 left-1/2 -translate-x-1/2 opacity-0 group-hover/preview:opacity-100 transition-opacity">
+        <div className="bg-background/90 backdrop-blur-md px-3 py-1 rounded-full border shadow-sm text-[9px] font-bold uppercase tracking-widest text-muted-foreground">
+          Live Render
         </div>
       </div>
     </div>
   );
+  return <PreviewFrame />;
 }
